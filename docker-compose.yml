@@ -1,0 +1,17 @@
+x-admin-pass: &pass "P@ssw0rd"
+
+services:
+  postgres:
+    image: docker.io/library/postgres:18-alpine
+    restart: unless-stopped
+    shm_size: 128m
+    volumes:
+      - pg_data:/var/lib/postgresql/18/docker
+      - ./postgres.sql:/docker-entrypoint-initdb.d/init.sql:z,ro
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_PASSWORD: *pass
+
+volumes:
+  pg_data:
