@@ -1,3 +1,76 @@
+server:
+  address: "${SERVER_BIND_ADDRESS}"
+  port: "${SERVER_BIND_PORT}"
+  servlet:
+    context-path: "${APP_CONTEXT_PATH}"
+
+management:
+  server:
+    port: "${SERVER_MANAGEMENT_PORT}"
+    base-path: "${server.servlet.context-path}"
+  endpoint:
+    health:
+      group:
+        readiness:
+          include:
+          - readinessState
+          - db
+
 spring:
+  main:
+    banner-mode: off
+  web:
+    error:
+      whitelabel:
+        enabled: false
   application:
-    name: demo
+    name: "${APP_NAME}"
+  profiles:
+    active: "${APP_ENVIRONMENT}"
+  threads:
+    virtual:
+      enabled: true
+  sql:
+    init:
+      mode: never
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: false
+  datasource:
+    url: "jdbc:postgresql://${PG_HOST}:${PG_PORT}/${PG_DB}"
+    username: "${PG_USER}"
+    password: "${PG_PASS}"
+
+jwt:
+  verify:
+    key:
+      uri: "${JWT_VERIFY_KEY_URI}"
+
+audit:
+  access-log:
+    exclude:
+      - /actuator
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  flyway:
+    enabled: true
+  jpa:
+    show-sql: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+    import: classpath:.env.example[.properties]
+  datasource:
+    url: jdbc:h2:mem:localdb;MODE=PostgreSQL;
+    username: sa
+    password:
