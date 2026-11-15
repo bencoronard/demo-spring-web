@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-final class AuthorizationHeaderResolver implements HandlerMethodArgumentResolver {
+public final class AuthorizationHeaderResolver implements HandlerMethodArgumentResolver {
 
   private final JwtParser parser;
 
