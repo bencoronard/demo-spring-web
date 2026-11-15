@@ -21,14 +21,22 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import dev.hireben.spring.web.demo.common.exception.api.ApplicationException;
 import dev.hireben.spring.web.demo.common.utility.ExceptionUtil;
+import io.micrometer.tracing.TraceContext;
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ElementKind;
 import jakarta.validation.Path;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 final class CommonExceptionHandler extends ResponseEntityExceptionHandler {
+
+  private final Tracer tracer;
 
   @Override
   protected ProblemDetail createProblemDetail(
@@ -54,7 +62,11 @@ final class CommonExceptionHandler extends ResponseEntityExceptionHandler {
         request);
 
     pd.setProperty("code", code);
-    pd.setProperty("id", request.toString()); // TODO: request ID
+
+    TraceContext context = tracer.currentTraceContext().context();
+    if (context != null) {
+      pd.setProperty("trace", context.traceId());
+    }
 
     return pd;
   }
@@ -107,6 +119,28 @@ final class CommonExceptionHandler extends ResponseEntityExceptionHandler {
         webRequest);
 
     return super.createResponseEntity(pd, HttpHeaders.EMPTY, status, webRequest);
+  }
+
+  @ExceptionHandler(Exception.class)
+  ResponseEntity<Object> catchAllException(
+      Exception ex,
+      WebRequest request) {
+
+    String code = "UNCAUGHT";
+
+    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+
+    ProblemDetail pd = createProblemDetail(
+        ex,
+        status,
+        null,
+        String.join(".", "common", "error", code.toLowerCase()),
+        null,
+        request);
+
+    log.error("Unhandle exception:", ex);
+
+    return super.createResponseEntity(pd, HttpHeaders.EMPTY, status, request);
   }
 
   private static String clientFieldName(Path path) {
