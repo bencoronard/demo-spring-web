@@ -43,6 +43,16 @@ spring:
     url: "jdbc:postgresql://${PG_HOST}:${PG_PORT}/${PG_DB}"
     username: "${PG_USER}"
     password: "${PG_PASS}"
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: quartz.
 
 jwt:
   verify:
@@ -70,7 +80,15 @@ spring:
     activate:
       on-profile: test
     import: classpath:.env.example[.properties]
+  flyway:
+    enabled: true
   datasource:
-    url: jdbc:h2:mem:localdb;MODE=PostgreSQL;
+    url: jdbc:h2:mem:localdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;
     username: sa
     password:
+  quartz:
+    properties:
+      org:
+        quartz:
+          jobStore:
+            tablePrefix: public.
